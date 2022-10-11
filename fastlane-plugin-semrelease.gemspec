@@ -2,13 +2,13 @@
 
 lib = File.expand_path("../lib", __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'fastlane/plugin/semantic_release/version'
+require 'fastlane/plugin/sem_release/version'
 
 Gem::Specification.new do |spec|
-  spec.name          = 'fastlane-plugin-semrelease'
-  spec.version       = Fastlane::SemanticRelease::VERSION
-  spec.author        = 'pboulch and Jiří Otáhal'
-  spec.email         = 'xotahal@gmail.com'
+  spec.name          = 'fastlane-plugin-sem_release'
+  spec.version       = Fastlane::SemRelease::VERSION
+  spec.author        = 'pboulch'
+  spec.email         = 'dev@boulch.fr'
 
   spec.summary       = 'Automated version managment and generator of release notes.'
   spec.homepage      = "https://github.com/pboulch/fastlane-plugin-semantic_release"

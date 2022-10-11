@@ -1,5 +1,5 @@
 require 'fastlane/action'
-require_relative '../helper/semantic_release_helper'
+require_relative '../helper/semrelease_helper'
 
 module Fastlane
   module Actions
@@ -8,7 +8,7 @@ module Fastlane
 
     class ConventionalChangelogAction < Action
       def self.get_commits_from_hash(params)
-        commits = Helper::SemanticReleaseHelper.git_log(
+        commits = Helper::SemReleaseHelper.git_log(
           pretty: '%s|%b|%H|%h|%an|%at|>',
           start: params[:hash],
           debug: params[:debug]
@@ -179,13 +179,13 @@ module Fastlane
         commits.each do |line|
           splitted = line.split("|")
 
-          commit = Helper::SemanticReleaseHelper.parse_commit(
+          commit = Helper::SemReleaseHelper.parse_commit(
             commit_subject: splitted[0],
             commit_body: splitted[1],
             pattern: format_pattern
           )
 
-          next if Helper::SemanticReleaseHelper.should_exclude_commit(
+          next if Helper::SemReleaseHelper.should_exclude_commit(
             commit_scope: commit[:scope],
             include_scopes: params[:include_scopes],
             ignore_scopes: params[:ignore_scopes]

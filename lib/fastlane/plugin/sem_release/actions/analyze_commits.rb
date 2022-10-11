@@ -1,5 +1,5 @@
 require 'fastlane/action'
-require_relative '../helper/semantic_release_helper'
+require_relative '../helper/semrelease_helper'
 
 module Fastlane
   module Actions
@@ -18,10 +18,26 @@ module Fastlane
     end
 
     class AnalyzeCommitsAction < Action
+
+      def self.get_branch_name(params)
+        puts("GET BRANCH NAME")
+        command = "git rev-parse --abbrev-ref HEAD"
+        Actions.sh(command, log: params[:debug])
+      end
+
+      def self.change_branch(params)
+        command = "git checkout #{params[:newbranch]}"
+        Action.sh(command, log: params[:debug])
+      end
+
       def self.get_last_tag(params)
+        current_branch = get_branch_name(debug: params[:debug])
+        change_branch(newbranch: "master", debug: params[:debug])
         # Try to find the tag
         command = "git describe --tags --match=#{params[:match]}"
-        Actions.sh(command, log: params[:debug])
+        result = Actions.sh(command, log: params[:debug])
+        change_branch(newbranch: current_branch, debug: params[:debug])
+        return result
       rescue
         UI.message("Tag was not found for match pattern - #{params[:match]}")
         ''
@@ -33,7 +49,7 @@ module Fastlane
       end
 
       def self.get_commits_from_hash(params)
-        commits = Helper::SemanticReleaseHelper.git_log(
+        commits = Helper::SemReleaseHelper.git_log(
           pretty: '%s|%b|>',
           start: params[:hash],
           debug: params[:debug]
@@ -118,6 +134,10 @@ module Fastlane
         next_minor = (version.split('.')[1] || 0).to_i
         next_patch = (version.split('.')[2] || 0).to_i
 
+        update_major = false
+        update_minor = false
+        update_patch = false
+
         is_next_version_compatible_with_codepush = true
 
         # Get commits log between last version and head
@@ -135,34 +155,35 @@ module Fastlane
           subject = parts[0].strip
           # conventional commits are in format
           # type: subject (fix: app crash - for example)
-          commit = Helper::SemanticReleaseHelper.parse_commit(
+          commit = Helper::SemReleaseHelper.parse_commit(
             commit_subject: subject,
             commit_body: parts[1],
             releases: releases,
             pattern: format_pattern
           )
 
-          next if Helper::SemanticReleaseHelper.should_exclude_commit(
+          next if Helper::SemReleaseHelper.should_exclude_commit(
             commit_scope: commit[:scope],
             include_scopes: params[:include_scopes],
             ignore_scopes: params[:ignore_scopes]
           )
 
-          update_major = false
-          update_minor = false
-          update_patch = false
+      
           if (commit[:release] == "major" || commit[:is_breaking_change]) && !update_major
             next_major += 1
             next_minor = 0
             next_patch = 0
             update_major = true
+            puts("NEW MAJOR")
           elsif commit[:release] == "minor" && !update_minor
             next_minor += 1
             next_patch = 0
             update_minor = true
+            puts("NEW MINOR")
           elsif commit[:release] == "patch" && !update_patch
             next_patch += 1
             update_patch = true
+            puts("NEW PATCH")
           end
 
           unless commit[:is_codepush_friendly]
@@ -176,7 +197,7 @@ module Fastlane
 
         next_version = "#{next_major}.#{next_minor}.#{next_patch}"
 
-        is_next_version_releasable = Helper::SemanticReleaseHelper.semver_gt(next_version, version)
+        is_next_version_releasable = Helper::SemReleaseHelper.semver_gt(next_version, version)
 
         Actions.lane_context[SharedValues::RELEASE_ANALYZED] = true
         Actions.lane_context[SharedValues::RELEASE_IS_NEXT_VERSION_HIGHER] = is_next_version_releasable
@@ -225,7 +246,7 @@ module Fastlane
         splitted.each do |line|
           # conventional commits are in format
           # type: subject (fix: app crash - for example)
-          commit = Helper::SemanticReleaseHelper.parse_commit(
+          commit = Helper::SemReleaseHelper.parse_commit(
             commit_subject: line.split("|")[0],
             commit_body: line.split("|")[1],
             releases: releases,
@@ -291,11 +312,11 @@ module Fastlane
             verify_block: proc do |value|
               case value
               when String
-                unless Helper::SemanticReleaseHelper.format_patterns.key?(value)
+                unless Helper::SemReleaseHelper.format_patterns.key?(value)
                   UI.user_error!("Invalid format preset: #{value}")
                 end
 
-                pattern = Helper::SemanticReleaseHelper.format_patterns[value]
+                pattern = Helper::SemReleaseHelper.format_patterns[value]
               when Regexp
                 pattern = value
               else
