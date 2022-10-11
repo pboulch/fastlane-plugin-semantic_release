@@ -7,8 +7,8 @@ require 'fastlane/plugin/semantic_release/version'
 Gem::Specification.new do |spec|
   spec.name          = 'fastlane-plugin-semrelease'
   spec.version       = Fastlane::SemanticRelease::VERSION
-  spec.author        = 'pboulch and Jiří Otáhal'
-  spec.email         = 'xotahal@gmail.com'
+  spec.author        = 'pboulch'
+  spec.email         = 'dev@boulch.fr'
 
   spec.summary       = 'Automated version managment and generator of release notes.'
   spec.homepage      = "https://github.com/pboulch/fastlane-plugin-semantic_release"
