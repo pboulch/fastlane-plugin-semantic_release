@@ -148,15 +148,21 @@ module Fastlane
             ignore_scopes: params[:ignore_scopes]
           )
 
-          if commit[:release] == "major" || commit[:is_breaking_change]
+          update_major = false
+          update_minor = false
+          update_patch = false
+          if (commit[:release] == "major" || commit[:is_breaking_change]) && !update_major
             next_major += 1
             next_minor = 0
             next_patch = 0
-          elsif commit[:release] == "minor"
+            update_major = true
+          elsif commit[:release] == "minor" && !update_minor
             next_minor += 1
             next_patch = 0
-          elsif commit[:release] == "patch"
+            update_minor = true
+          elsif commit[:release] == "patch" && !update_patch
             next_patch += 1
+            update_patch = true
           end
 
           unless commit[:is_codepush_friendly]
@@ -164,6 +170,7 @@ module Fastlane
           end
 
           next_version = "#{next_major}.#{next_minor}.#{next_patch}"
+
           UI.message("#{next_version}: #{subject}") if params[:show_version_path]
         end
 
